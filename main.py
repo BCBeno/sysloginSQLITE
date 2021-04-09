@@ -3,11 +3,8 @@ import sqlite3
 con = sqlite3.connect('users.db')
 
 def log():
-    cur = con.cursor()
     user = input('Enter username:\n')
-    cur.execute('SELECT COUNT(user) FROM users WHERE user=?',(user,))
-    x = cur.fetchall()[0][0]
-    if int(x) == 0:
+    if user_exist(user) == 0:
         print('User not found!\nRetry?')
         retry = input('YES/NO (Y/N)')
         if retry in ['YES', 'yes', 'y', 'Y']:
@@ -32,14 +29,20 @@ def log():
             print('Nice you\'re logged in! B)')
             input()
 
+def user_exist(user):
+    cur = con.cursor()
+    cur.execute('SELECT COUNT(user) FROM users WHERE user=?',(user,))
+    return cur.fetchall()[0][0]
 
 def register():
     cur = con.cursor()
     user = input('Enter username:\n')
-    cur.execute('SELECT COUNT(user) FROM users WHERE user=?',(user,))
-    if cur.fetchall()[0][0] == 1:
+    if user_exist(user):
         print('You are already registered.\n')
         main()
+    elif len(user)<3:
+        print('Your username must be at least 3 characters!')
+        register()
     else:
         pw = input('Enter password:\n')
         result = bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt())
@@ -52,8 +55,7 @@ def register():
 def change():
     cur = con.cursor()
     user = input('Enter username:\n')
-    cur.execute('SELECT COUNT(user) FROM users WHERE user=?',(user,))
-    if cur.fetchall()[0][0] == 1:
+    if user_exist(user):
         old = input('Enter old password:\n')
         cur.execute('SELECT pass FROM users WHERE user=?',(user,))
         if bcrypt.checkpw(old.encode('utf-8'), cur.fetchall()[0][0].encode('utf-8')) == 0:
